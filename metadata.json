@@ -1,0 +1,8 @@
+{
+  "name": "Proctus",
+  "description": "Plateforme d'élite pour la promotion d'une école de finances : réseau social, QCM multijoueur en direct et Bibliothèque de recherche.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

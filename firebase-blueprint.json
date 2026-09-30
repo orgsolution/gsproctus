@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "Utilisateur de la promotion Proctus",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "cohort": { "type": "string" },
+        "specialty": { "type": "string" },
+        "role": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatar": { "type": "string" },
+        "totalScore": { "type": "number" },
+        "gamesPlayed": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "firstName", "lastName", "cohort", "specialty"]
+    },
+    "post": {
+      "title": "Post",
+      "description": "Publication du fil d'actualité Proctus",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorCohort": { "type": "string" },
+        "authorSpecialty": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["authorId", "authorName", "content", "createdAt"]
+    },
+    "directMessage": {
+      "title": "DirectMessage",
+      "description": "Message privé 1-à-1 entre camarades",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["senderId", "receiverId", "content", "createdAt"]
+    },
+    "gameSession": {
+      "title": "GameSession",
+      "description": "Session multijoueur QCM Arena en direct",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["code", "title", "status", "hostId", "hostName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Collection des profils utilisateurs de la promotion"
+    },
+    "/posts/{postId}": {
+      "schema": "post",
+      "description": "Publications partagées sur le réseau Proctus"
+    },
+    "/messages/{messageId}": {
+      "schema": "directMessage",
+      "description": "Messages privés sécurisés entre étudiants"
+    },
+    "/games/{gameId}": {
+      "schema": "gameSession",
+      "description": "Parties interactives QCM Arena"
+    },
+    "/config/{configId}": {
+      "schema": "user",
+      "description": "Configuration globale de l'établissement"
+    }
+  }
+}

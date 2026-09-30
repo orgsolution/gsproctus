@@ -1,0 +1,68 @@
+{
+  "users": [
+    {
+      "id": "user-g-1790701466944",
+      "email": "acceuil.org@gmail.com",
+      "passwordHash": "345882dbbf54bed16b399859eae645e93cd62672640b1ac032ddf6873a3aec2f",
+      "firstName": "Admin",
+      "lastName": "Proctus",
+      "cohort": "2025",
+      "specialty": "Finance",
+      "role": "SuperAdmin",
+      "bio": "Membre connecté via Google Workspace",
+      "avatar": "https://unavatar.io/google/acceuil.org%40gmail.com",
+      "badges": [
+        "SuperAdmin",
+        "Google Auth",
+        "Élève - Stagiaire"
+      ],
+      "totalScore": 0,
+      "gamesPlayed": 0,
+      "emailConfirmed": true,
+      "authProvider": "google",
+      "createdAt": "2026-09-29T17:04:26.944Z"
+    },
+    {
+      "id": "user-superadmin-accueil",
+      "email": "accueil.org@gmail.com",
+      "passwordHash": "",
+      "firstName": "Admin",
+      "lastName": "Proctus",
+      "cohort": "2025",
+      "specialty": "Audit et Comptabilité",
+      "role": "SuperAdmin",
+      "bio": "SuperAdministrateur Officiel de la Promotion",
+      "avatar": "https://unavatar.io/google/accueil.org@gmail.com",
+      "badges": [
+        "SuperAdmin",
+        "Direction",
+        "Certifié"
+      ],
+      "totalScore": 500,
+      "gamesPlayed": 10,
+      "emailConfirmed": true,
+      "authProvider": "google",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "schoolConfig": {
+    "schoolName": "Haute École de Finance",
+    "headerSubtitle": "Promotion Officielle",
+    "cohortLabel": "2025",
+    "badgeText": "Certifié"
+  },
+  "specialties": [
+    "Finance",
+    "Audit et Comptabilité",
+    "Douane",
+    "Trésor",
+    "Comptabilité",
+    "Économie",
+    "Droit",
+    "Gestion",
+    "Agronomie",
+    "Administration",
+    "Administration Publique",
+    "Informatique"
+  ]
+}
