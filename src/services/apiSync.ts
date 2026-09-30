@@ -251,7 +251,7 @@ export function subscribeToPostsOnline(
       },
       (error) => {
         if (onError) onError(error);
-        handleFirestoreError(error, OperationType.LIST, 'posts');
+        console.warn('[Firestore] subscribeToPosts error:', error);
       }
     );
     return unsubscribe;
@@ -293,7 +293,7 @@ export function subscribeToMessagesOnline(
       },
       (error) => {
         if (onError) onError(error);
-        handleFirestoreError(error, OperationType.LIST, 'messages');
+        console.warn('[Firestore] subscribeToMessages error:', error);
       }
     );
     return unsubscribe;
@@ -329,7 +329,7 @@ export function subscribeToGameOnline(
       },
       (error) => {
         if (onError) onError(error);
-        handleFirestoreError(error, OperationType.GET, `games/${gameCode}`);
+        console.warn(`[Firestore] subscribeToGame (${gameCode}) error:`, error);
       }
     );
     return unsubscribe;

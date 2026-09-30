@@ -9,6 +9,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { initializeStorageIfEmpty } from './services/storage';
+import { testConnection } from './lib/firebase';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
@@ -29,6 +30,7 @@ import './i18n';
 export default function App() {
   useEffect(() => {
     initializeStorageIfEmpty();
+    testConnection().catch(() => {});
   }, []);
 
   return (

@@ -26,7 +26,7 @@ const getGeminiClient = () => {
   });
 };
 
-// 1. Endpoint QCM Generator with Gemini 3.8 Flash
+// 1. Endpoint QCM Generator with multi-model fallback & graceful recovery
 app.post('/api/gemini/quiz', async (req, res) => {
   const { docTitle, docContent, numQuestions = 5, timeLimit = 20, language = 'fr' } = req.body;
   if (!docContent && !docTitle) {
@@ -34,14 +34,15 @@ app.post('/api/gemini/quiz', async (req, res) => {
   }
 
   const ai = getGeminiClient();
+  const defaultShapes = ['▲', '◆', '●', '■'];
+  const defaultColors = ['#E63946', '#1D3557', '#F4A261', '#2A9D8F'];
+
   if (!ai) {
-    console.log('[Gemini Server] No GEMINI_API_KEY set; using high-grade financial algorithmic generator');
     const fallbackQuiz = generateFallbackFinanceQuiz(docTitle || 'Finance', numQuestions, timeLimit, language);
-    return res.json({ questions: fallbackQuiz, source: 'fallback' });
+    return res.json({ questions: fallbackQuiz, source: 'algorithmic' });
   }
 
-  try {
-    const prompt = `Génère un quiz QCM académique d'excellence pour des étudiants d'une grande école de finance (Audit, Comptabilité, Trésorerie, Douane, M&A).
+  const prompt = `Génère un quiz QCM académique d'excellence pour des étudiants d'une grande école de finance (Audit, Comptabilité, Trésorerie, Douane, M&A).
 Sujet / Titre : "${docTitle || 'Finance Corporative et de Marché'}"
 Extrait du cours / document : ${(docContent || '').slice(0, 8000)}
 Consignes :
@@ -57,62 +58,65 @@ Consignes :
 6. Rédige en langue : "${language}".
 7. Réponds strictement en JSON structuré.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: 'Tu es un professeur émérite de finance en haute école (M&A, Valorisation DCF, Audit et Comptabilité, Trésorerie, Douane). Produis des QCM rigoureux.',
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              question: { type: Type.STRING },
-              options: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    text: { type: Type.STRING },
-                    color: { type: Type.STRING },
-                    shape: { type: Type.STRING },
+  const modelsToTry = ['gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  for (const model of modelsToTry) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction: 'Tu es un professeur émérite de finance en haute école (M&A, Valorisation DCF, Audit et Comptabilité, Trésorerie, Douane). Produis des QCM rigoureux.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                options: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      text: { type: Type.STRING },
+                      color: { type: Type.STRING },
+                      shape: { type: Type.STRING },
+                    },
+                    required: ['text', 'color', 'shape'],
                   },
-                  required: ['text', 'color', 'shape'],
                 },
+                correctIndex: { type: Type.INTEGER },
+                timeLimit: { type: Type.INTEGER },
+                explanation: { type: Type.STRING },
               },
-              correctIndex: { type: Type.INTEGER },
-              timeLimit: { type: Type.INTEGER },
-              explanation: { type: Type.STRING },
+              required: ['question', 'options', 'correctIndex'],
             },
-            required: ['question', 'options', 'correctIndex'],
           },
         },
-      },
-    });
+      });
 
-    const rawText = response.text || '[]';
-    let questions = JSON.parse(rawText);
+      const rawText = response.text || '[]';
+      let questions = JSON.parse(rawText);
 
-    // Normalize colors & shapes & timeLimit
-    const defaultShapes = ['▲', '◆', '●', '■'];
-    const defaultColors = ['#E63946', '#1D3557', '#F4A261', '#2A9D8F'];
-    questions = questions.map((q: any) => ({
-      ...q,
-      timeLimit: q.timeLimit || timeLimit,
-      options: (q.options || []).slice(0, 4).map((opt: any, idx: number) => ({
-        text: typeof opt === 'string' ? opt : opt.text,
-        color: defaultColors[idx % 4],
-        shape: defaultShapes[idx % 4],
-      })),
-    }));
+      questions = questions.map((q: any) => ({
+        ...q,
+        timeLimit: q.timeLimit || timeLimit,
+        options: (q.options || []).slice(0, 4).map((opt: any, idx: number) => ({
+          text: typeof opt === 'string' ? opt : opt.text,
+          color: defaultColors[idx % 4],
+          shape: defaultShapes[idx % 4],
+        })),
+      }));
 
-    return res.json({ questions, source: 'gemini' });
-  } catch (error: any) {
-    console.error('[Gemini Server Error]', error);
-    const fallbackQuiz = generateFallbackFinanceQuiz(docTitle || 'Finance', numQuestions, timeLimit, language);
-    return res.json({ questions: fallbackQuiz, source: 'fallback_error', error: error?.message });
+      return res.json({ questions, source: 'gemini', modelUsed: model });
+    } catch (modelError: any) {
+      console.warn(`[Gemini Model ${model} unavailable or quota exceeded]`, modelError?.message);
+    }
   }
+
+  // Graceful fallback to algorithmic question generator
+  const fallbackQuiz = generateFallbackFinanceQuiz(docTitle || 'Finance', numQuestions, timeLimit, language);
+  return res.json({ questions: fallbackQuiz, source: 'algorithmic' });
 });
 
 // 2. Confirmation & Reset Email delivery service
@@ -137,15 +141,21 @@ app.post('/api/gemini/translate', async (req, res) => {
   if (!ai) {
     return res.json({ translatedText: text, note: 'API key not configured' });
   }
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: `Traduis fidèlement ce texte dans la langue suivante : "${targetLang}". Ne renvoie rien d'autre que la traduction exacte.\n\nTexte :\n${text}`,
-    });
-    return res.json({ translatedText: response.text || text });
-  } catch (err: any) {
-    return res.json({ translatedText: text, error: err.message });
+  const modelsToTry = ['gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  for (const model of modelsToTry) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: `Traduis fidèlement ce texte dans la langue suivante : "${targetLang}". Ne renvoie rien d'autre que la traduction exacte.\n\nTexte :\n${text}`,
+      });
+      if (response && response.text) {
+        return res.json({ translatedText: response.text.trim() });
+      }
+    } catch (err: any) {
+      console.warn(`[Gemini translate with ${model} unavailable]`, err?.message);
+    }
   }
+  return res.json({ translatedText: text });
 });
 
 // Fallback Finance QCM generator with financial bank of questions
@@ -388,7 +398,10 @@ async function startServer() {
   } else {
     // Development mode with Vite middleware
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: process.env.DISABLE_HMR === 'true' ? false : undefined,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
